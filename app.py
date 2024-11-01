@@ -29,10 +29,7 @@ class Goal:
         }
 
 
-goals: list[Goal] = [
-    Goal(0, 'Walk 10,000 steps', datetime(2021, 12, 31), Goal.Type.STEPS,
-         10_000),
-]
+goals: list[Goal] = []
 
 AUTH_TOKEN = os.getenv("AUTH_TOKEN")
 
