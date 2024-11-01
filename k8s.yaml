@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hikeit
+  labels:
+    name: hikeit
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hikeit-api
+  namespace: hikeit
+spec:
+  selector:
+    matchLabels:
+      app: hikeit-api
+  template:
+    metadata:
+      labels:
+        app: hikeit-api
+    spec:
+      containers:
+      - name: hikeit-api
+        image: pycrs/hikeit-api:latest
+        envFrom:
+          - secretRef:
+              name: auth-token
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hikeit-api
+  namespace: hikeit
+spec:
+  selector:
+    app: hikeit-api 
+  ports:
+  - port: 5000 
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: hikeit-api
+  namespace: hikeit 
+spec:
+  entryPoints: [https]
+  routes:
+  - kind: Rule
+    match: Host(`hikeit-api.pycrs.cz`) 
+    services:
+    - kind: Service
+      name: hikeit-api 
+      port: 5000 
+  tls: {}
