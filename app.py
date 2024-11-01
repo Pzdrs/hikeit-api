@@ -1,7 +1,8 @@
+import os
 from datetime import datetime
 from enum import Enum
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -33,6 +34,29 @@ goals: list[Goal] = [
          10_000),
 ]
 
+AUTH_TOKEN = os.getenv("AUTH_TOKEN")
+
+
+def token_required(f):
+    def middleware(*args, **kwargs):
+        auth_header = request.headers.get("Authorization")
+
+        # Check if the Authorization header is present and contains a bearer token
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return jsonify({"error": "Authorization header with Bearer token is required"}), 401
+
+        # Extract the token (everything after 'Bearer ')
+        token = auth_header.split(" ")[1]
+
+        # Example token check (replace this with your own validation)
+        if token != AUTH_TOKEN:
+            return jsonify({"error": "Invalid or expired token"}), 401
+
+        return f(*args, **kwargs)
+
+    middleware.__name__ = f.__name__
+    return middleware
+
 
 @app.route('/')
 def hello_world():  # put application's code here
@@ -45,6 +69,7 @@ def all_goals():
 
 
 @app.route('/api/v1/goals', methods=['POST'])
+@token_required
 def create_goal():
     req = request.json
 
@@ -63,6 +88,7 @@ def create_goal():
 
 
 @app.route('/api/v1/goals/<int:goal_id>/finish', methods=['POST'])
+@token_required
 def finish_goal(goal_id):
     for goal in goals:
         if goal.id == goal_id:
